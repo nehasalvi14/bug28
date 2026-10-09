@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QA Core Nexus - Enterprise Bug & Test Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bgDark: '#080B12',
+            bgSidebar: '#0D1422',
+            bgCard: '#111827',
+            primaryBlue: '#2563EB',
+            highlightBlue: '#38BDF8',
+            softWhite: '#F1F5F9',
+            slateText: '#94A3B8',
+            accentGreen: '#22C55E',
+            accentAmber: '#F59E0B',
+            accentRed: '#EF4444'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #080B12; color: #F1F5F9; font-family: system-ui, -apple-system, sans-serif; }
+    .bg-sidebar { background-color: #0D1422; }
+    .bg-card { background-color: #111827; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #080B12; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 space-y-3 pointer-events-none"></div>
+
+  <!-- Auth Screen Overlay -->
+  <div id="authOverlay" class="fixed inset-0 bg-[#080B12] z-40 flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-800 w-full max-w-md rounded-2xl p-8 shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="inline-flex p-3 bg-blue-600/20 text-blue-500 rounded-xl mb-3 border border-blue-500/30">
+          <i data-lucide="shield-check" class="w-8 h-8"></i>
+        </div>
+        <h2 id="authTitle" class="text-2xl font-bold text-white">Sign In to QA Core</h2>
+        <p class="text-xs text-slate-400 mt-1">Enterprise Software Quality Portal</p>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Username / Email</label>
+          <input id="authInputUser" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="admin or admin@qanexus.com">
+        </div>
+
+        <div id="registerEmailField" class="hidden">
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Email Address</label>
+          <input id="authInputEmail" type="email" class="w-full bg-[#080B12] border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="user@qanexus.com">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Password</label>
+          <div class="relative">
+            <input id="authInputPassword" type="password" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500 pr-10" placeholder="••••••••">
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+              <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="registerRoleField" class="hidden">
+          <label class="block text-xs font-semibold text-slate-400 mb-1">User Role</label>
+          <select id="authInputRole" class="w-full bg-[#080B12] border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            <option value="QA Tester">QA Tester</option>
+            <option value="Developer">Developer</option>
+            <option value="QA Head">QA Head</option>
+            <option value="Client">Client</option>
+          </select>
+        </div>
+
+        <div class="flex justify-between items-center text-xs">
+          <button type="button" onclick="openForgotModal()" class="text-blue-400 hover:underline">Forgot Password?</button>
+          <button type="button" onclick="toggleAuthMode()" id="authToggleBtn" class="text-slate-400 hover:text-white">Need an account? Register</button>
+        </div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm shadow-lg shadow-blue-600/20">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Wrapper -->
+  <div class="w-full flex h-full">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-sidebar border-r border-slate-800 flex flex-col justify-between p-4 flex-shrink-0">
+      <div>
+        <div class="flex items-center gap-3 px-2 mb-8">
+          <div class="p-2 bg-blue-600 rounded-xl text-white">
+            <i data-lucide="shield-check" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-base text-white tracking-wide">QA Nexus</h1>
+            <p class="text-[11px] text-slate-400">Python Flask Engine</p>
+          </div>
+        </div>
+
+        <nav class="space-y-1">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+          </button>
+          <button onclick="switchTab('projects')" id="nav-projects" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="folder-kanban" class="w-4 h-4"></i> Projects
+          </button>
+          <button onclick="switchTab('sprints')" id="nav-sprints" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="calendar-range" class="w-4 h-4"></i> Sprint Management
+          </button>
+          <button onclick="switchTab('bugs')" id="nav-bugs" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="bug" class="w-4 h-4"></i> Bug Management
+          </button>
+          <button onclick="switchTab('testcases')" id="nav-testcases" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="file-check-2" class="w-4 h-4"></i> Test Cases
+          </button>
+          <!-- NEW NAVIGATION TAB FOR TEST PLAN & SPRINT DISCUSSION -->
+          <button onclick="switchTab('testplans')" id="nav-testplans" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="messages-square" class="w-4 h-4"></i> Test Plan & Discussion
+          </button>
+          <button onclick="switchTab('team')" id="nav-team" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="users" class="w-4 h-4"></i> Team & Hierarchy
+          </button>
+          <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">
+            <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Reports & Metrics
+          </button>
+        </nav>
+      </div>
+
+      <div class="p-3 bg-card rounded-xl border border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-xs" id="userAvatar">QA</div>
+          <div>
+            <p class="text-xs font-semibold text-white" id="currentUserName">Nishit Dubey</p>
+            <p class="text-[10px] text-slate-400" id="currentUserRole">QA Head</p>
+          </div>
+        </div>
+        <button onclick="logout()" class="text-slate-400 hover:text-red-400 p-1" title="Logout">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-8 bg-[#080B12]">
+      
+      <!-- DASHBOARD TAB -->
+      <section id="tab-dashboard" class="space-y-8">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">System Overview</h2>
+            <p class="text-xs text-slate-400">Real-time Software Quality Metrics & Analytics</p>
+          </div>
+          <span class="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-medium flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Flask API Live
+          </span>
+        </div>
+
+        <!-- Metric Stat Panels -->
+        <div class="grid grid-cols-4 gap-4">
+          <div onclick="switchTab('projects')" class="p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl">
+            <div class="flex justify-between items-center text-slate-400 mb-2">
+              <span class="text-xs font-medium">Total Projects</span>
+              <i data-lucide="folder-kanban" class="w-4 h-4 text-blue-400"></i>
+            </div>
+            <h3 id="dashProjects" class="text-2xl font-bold text-white">0</h3>
+          </div>
+          <div onclick="switchTab('bugs')" class="p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl">
+            <div class="flex justify-between items-center text-slate-400 mb-2">
+              <span class="text-xs font-medium">Total Bugs</span>
+              <i data-lucide="bug" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <h3 id="dashTotalBugs" class="text-2xl font-bold text-white">0</h3>
+          </div>
+          <div onclick="switchTab('bugs')" class="p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl">
+            <div class="flex justify-between items-center text-slate-400 mb-2">
+              <span class="text-xs font-medium">Critical Bugs</span>
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-red-400"></i>
+            </div>
+            <h3 id="dashCriticalBugs" class="text-2xl font-bold text-red-400">0</h3>
+          </div>
+          <div onclick="switchTab('bugs')" class="p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl">
+            <div class="flex justify-between items-center text-slate-400 mb-2">
+              <span class="text-xs font-medium">Pending Bugs</span>
+              <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <h3 id="dashPendingBugs" class="text-2xl font-bold text-amber-400">0</h3>
+          </div>
+          <div onclick="switchTab('bugs')" class="p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl">
+            <div class="flex justify-between items-center text-slate-400 mb-2">
+              <span class="text-xs font-medium">Resolved Bugs</span>
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i>
+            </div>
+            <h3 id="dashResolvedBugs" class="text-2xl font-bold text-green-400">0</h3>
+          </div>
+          <div onclick="switchTab('testcases')" class="p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl">
+            <div class="flex justify-between items-center text-slate-400 mb-2">
+              <span class="text-xs font-medium">Total Test Cases</span>
+              <i data-lucide="file-check-2" class="w-4 h-4 text-sky-400"></i>
+            </div>
+            <h3 id="dashTestCases" class="text-2xl font-bold text-white">0</h3>
+          </div>
+          <div onclick="switchTab('reports')" class="col-span-2 p-5 bg-card border border-slate-800 hover:border-blue-500/50 transition cursor-pointer rounded-xl flex flex-col justify-between">
+            <div class="flex justify-between items-center text-slate-400">
+              <span class="text-xs font-medium">Overall QA Progress</span>
+              <i data-lucide="trending-up" class="w-4 h-4 text-blue-400"></i>
+            </div>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="dashProgressPct" class="text-2xl font-bold text-white">0%</h3>
+              <span class="text-xs text-slate-400">Resolution Rate</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
+              <div id="dashProgressBar" class="bg-blue-600 h-full w-0 transition-all duration-500"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Charts -->
+        <div class="grid grid-cols-2 gap-6">
+          <div class="p-6 bg-card border border-slate-800 rounded-xl">
+            <h4 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i> Severity-wise Bug Summary
+            </h4>
+            <div class="h-64 flex items-center justify-center">
+              <canvas id="severityChart"></canvas>
+            </div>
+          </div>
+          <div class="p-6 bg-card border border-slate-800 rounded-xl">
+            <h4 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i> Open vs Resolved Defects Overview
+            </h4>
+            <div class="h-64 flex items-center justify-center">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROJECTS TAB -->
+      <section id="tab-projects" class="hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Project Management</h2>
+            <p class="text-xs text-slate-400">Manage software projects, team assignments, and outcomes</p>
+          </div>
+          <button onclick="openModal('projectModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Project
+          </button>
+        </div>
+
+        <div id="projectsGrid" class="grid grid-cols-2 gap-6"></div>
+      </section>
+
+      <!-- SPRINT MANAGEMENT TAB -->
+      <section id="tab-sprints" class="hidden space-y-6">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Sprint Management</h2>
+            <p class="text-xs text-slate-400">Plan iterations, assign sprint ownership, and track linked bugs and test cases</p>
+          </div>
+          <button onclick="openSprintModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Sprint
+          </button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="p-4 bg-card border border-slate-800 rounded-xl"><p class="text-xs text-slate-400">Total Sprints</p><p id="sprintMetricTotal" class="text-2xl font-bold text-white mt-1">0</p></div>
+          <div class="p-4 bg-card border border-slate-800 rounded-xl"><p class="text-xs text-slate-400">Active</p><p id="sprintMetricActive" class="text-2xl font-bold text-blue-400 mt-1">0</p></div>
+          <div class="p-4 bg-card border border-slate-800 rounded-xl"><p class="text-xs text-slate-400">Planned</p><p id="sprintMetricPlanned" class="text-2xl font-bold text-amber-400 mt-1">0</p></div>
+          <div class="p-4 bg-card border border-slate-800 rounded-xl"><p class="text-xs text-slate-400">Completed</p><p id="sprintMetricCompleted" class="text-2xl font-bold text-emerald-400 mt-1">0</p></div>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <input id="sprintSearch" oninput="renderSprints()" class="flex-1 min-w-[180px] bg-card border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="Search sprint name, project, or lead...">
+          <select id="sprintStatusFilter" onchange="renderSprints()" class="bg-card border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"><option value="All">All statuses</option><option>Planned</option><option>Active</option><option>Completed</option><option>On Hold</option></select>
+        </div>
+        <div id="sprintsGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- BUGS TAB -->
+      <section id="tab-bugs" class="hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Bug Management</h2>
+            <p class="text-xs text-slate-400">Report, assign, and track defects across software modules</p>
+          </div>
+          <button onclick="openModal('bugModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Log New Bug
+          </button>
+        </div>
+
+        <div id="bugsList" class="space-y-4"></div>
+      </section>
+
+      <!-- TEST CASES TAB -->
+      <section id="tab-testcases" class="hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Test Cases</h2>
+            <p class="text-xs text-slate-400">Create, execute, and monitor automated and manual test suites</p>
+          </div>
+          <button onclick="openModal('testCaseModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Create Test Case
+          </button>
+        </div>
+
+        <div id="testCasesList" class="space-y-4"></div>
+      </section>
+
+      <!-- NEW SECTION: TEST PLAN & SPRINT DISCUSSION TAB -->
+      <section id="tab-testplans" class="hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Test Plan & Sprint Discussion</h2>
+            <p class="text-xs text-slate-400">Define test strategies, release scopes, and discuss sprint goals in real-time</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Left Column: Test Plan Definition Box -->
+          <div class="col-span-2 bg-card border border-slate-800 rounded-xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i> Active Sprint Test Plan
+              </h3>
+              <span class="text-xs px-2.5 py-1 bg-blue-600/20 text-blue-400 rounded-md border border-blue-500/30 font-medium">Sprint 12 (Active)</span>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Test Strategy & Scope</label>
+                <textarea id="tpScope" rows="4" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-3 text-xs text-white focus:border-blue-500 focus:outline-none" placeholder="- Focus on Auth Module regression&#10;- Mobile API load testing&#10;- Payment Gateway integration validation"></textarea>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">Entry Criteria</label>
+                  <textarea id="tpEntry" rows="3" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-3 text-xs text-white focus:border-blue-500 focus:outline-none" placeholder="Build deployed to QA server, 100% unit tests passed"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">Exit Criteria</label>
+                  <textarea id="tpExit" rows="3" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-3 text-xs text-white focus:border-blue-500 focus:outline-none" placeholder="Zero Critical defects, >95% test cases executed successfully"></textarea>
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-2">
+                <button onclick="saveTestPlan()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-2">
+                  <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Test Plan
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Sprint Discussion Box / Activity Feed -->
+          <div class="bg-card border border-slate-800 rounded-xl p-6 flex flex-col justify-between h-[520px]">
+            <div>
+              <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                  <i data-lucide="messages-square" class="w-4 h-4 text-emerald-400"></i> Sprint Discussion Box
+                </h3>
+                <span class="text-[10px] text-slate-400">Live Team Thread</span>
+              </div>
+
+              <!-- Message Stream -->
+              <div id="discussionStream" class="space-y-3 overflow-y-auto max-h-[340px] pr-1">
+                <div class="p-3 bg-[#080B12] border border-slate-800 rounded-lg space-y-1">
+                  <div class="flex justify-between text-[11px]">
+                    <span class="font-bold text-blue-400">Nishit Dubey (QA Head)</span>
+                    <span class="text-slate-500">10:15 AM</span>
+                  </div>
+                  <p class="text-xs text-slate-300">Please review login error handling test plan before releasing to staging.</p>
+                </div>
+
+                <div class="p-3 bg-[#080B12] border border-slate-800 rounded-lg space-y-1">
+                  <div class="flex justify-between text-[11px]">
+                    <span class="font-bold text-purple-400">Priya Nair (Developer)</span>
+                    <span class="text-slate-500">10:22 AM</span>
+                  </div>
+                  <p class="text-xs text-slate-300">Fix for Bug #TP-1 pushed to staging branch. Ready for re-testing.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comment Input Box -->
+            <div class="mt-4 pt-3 border-t border-slate-800 flex gap-2">
+              <input id="sprintCommentInput" type="text" placeholder="Add sprint discussion comment..." class="flex-1 bg-[#080B12] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              <button onclick="postSprintComment()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEAM TAB -->
+      <section id="tab-team" class="hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Team & Hierarchy</h2>
+            <p class="text-xs text-slate-400">Manage QA heads, testers, developers, and clients</p>
+          </div>
+          <button onclick="openModal('teamModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Team Member
+          </button>
+        </div>
+
+        <!-- Visual Hierarchy Tree -->
+        <div class="bg-card border border-slate-800 p-6 rounded-xl text-center space-y-4">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Organizational Hierarchy</p>
+          <div class="flex justify-center items-center gap-8 text-xs font-semibold">
+            <span class="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg">QA Head</span>
+            <span class="text-slate-500">→</span>
+            <span class="px-4 py-2 bg-sky-600/20 text-sky-400 border border-sky-500/30 rounded-lg">QA Tester / Developer</span>
+            <span class="text-slate-500">→</span>
+            <span class="px-4 py-2 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-lg">Client</span>
+          </div>
+        </div>
+
+        <div id="teamGrid" class="grid grid-cols-3 gap-6"></div>
+      </section>
+
+      <!-- REPORTS TAB -->
+      <section id="tab-reports" class="hidden space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Reports & Quality Metrics</h2>
+            <p class="text-xs text-slate-400">Detailed quality audits and defect resolution metrics</p>
+          </div>
+          <button onclick="openModal('reportModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Bug Report
+          </button>
+        </div>
+
+        <div id="reportsList" class="space-y-4"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Sprint Create/Edit Modal -->
+  <div id="sprintModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-2xl rounded-xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between"><h3 id="sprintModalTitle" class="text-lg font-bold text-white">Add Sprint</h3><button type="button" onclick="closeModal('sprintModal')" class="text-slate-400 hover:text-white">✕</button></div>
+      <form id="sprintForm" onsubmit="saveSprint(event)" class="space-y-4">
+        <input id="sprintEditId" type="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="block text-xs text-slate-400 mb-1">Sprint Name *</label><input id="sprintName" required maxlength="80" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="e.g. Sprint 16"></div>
+          <div><label class="block text-xs text-slate-400 mb-1">Project *</label><select id="sprintProject" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></select></div>
+          <div><label class="block text-xs text-slate-400 mb-1">Start Date *</label><input id="sprintStartDate" type="date" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-xs text-slate-400 mb-1">End Date *</label><input id="sprintEndDate" type="date" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500"></div>
+          <div><label class="block text-xs text-slate-400 mb-1">Sprint Lead</label><input id="sprintLead" maxlength="100" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Lead name"></div>
+          <div><label class="block text-xs text-slate-400 mb-1">Status</label><select id="sprintStatus" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500"><option>Planned</option><option>Active</option><option>On Hold</option><option>Completed</option></select></div>
+          <div class="md:col-span-2"><label class="block text-xs text-slate-400 mb-1">Sprint Goal</label><textarea id="sprintGoal" rows="3" maxlength="1000" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="What should this sprint deliver?"></textarea></div>
+          <div class="md:col-span-2"><label class="block text-xs text-slate-400 mb-1">Team Members (comma separated)</label><input id="sprintTeamMembers" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="QA tester, developer, product owner"></div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeModal('sprintModal')" class="px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800">Cancel</button><button id="sprintSaveButton" type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg">Save Sprint</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bug Modal (Updated with Sprint Discussion Field) -->
+  <div id="bugModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-xl rounded-xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-lg font-bold text-white">Log Defect / Bug</h3>
+      <form onsubmit="createBug(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Bug Title</label>
+          <input id="bugTitle" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Project</label>
+            <input id="bugProject" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Severity</label>
+            <select id="bugSeverity" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Description</label>
+          <textarea id="bugDesc" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Steps to Reproduce</label>
+          <textarea id="bugSteps" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Expected Result</label>
+            <textarea id="bugExpected" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Actual Result</label>
+            <textarea id="bugActual" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+          </div>
+        </div>
+        <!-- NEW FIELD IN BUG MODAL -->
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Sprint Discussion Notes / Test Plan Link</label>
+          <input id="bugSprintNotes" type="text" placeholder="e.g. Discussed in Sprint 12 meeting / Refers to Test Plan TC-10" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Assigned Tester</label>
+            <input id="bugTester" type="text" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Assigned Developer</label>
+            <input id="bugDev" type="text" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('bugModal')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg">Log Bug</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<!-- Detailed Bug Modal -->
+<div id="bugDetailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b0f19] border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-[#080b12]">
+            <div class="flex items-center gap-3">
+                <span id="modalBugIdTag" class="px-2.5 py-1 bg-red-950/80 border border-red-800 text-red-300 font-bold text-xs rounded-lg">BUG-1001</span>
+                <span id="modalProjectName" class="text-xs font-semibold text-blue-400 uppercase tracking-wider">E-Commerce Platform</span>
+                <span id="modalSprintName" class="text-xs px-2 py-0.5 bg-slate-800 text-slate-300 rounded">Sprint 14</span>
+            </div>
+            <button onclick="closeModal('bugDetailModal')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Interactive Workflow State Pills Bar -->
+        <div class="px-6 py-3 bg-[#0d1322] border-b border-slate-800 flex items-center gap-2 overflow-x-auto">
+            <span class="text-xs font-medium text-slate-400 mr-2">Workflow:</span>
+            <button onclick="updateBugStatus('New')" class="workflow-pill px-3 py-1 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">New</button>
+            <button onclick="updateBugStatus('Open')" class="workflow-pill px-3 py-1 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Open</button>
+            <button onclick="updateBugStatus('In Progress')" class="workflow-pill px-3 py-1 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">In Progress</button>
+            <button onclick="updateBugStatus('Resolved')" class="workflow-pill px-3 py-1 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Resolved</button>
+            <button onclick="updateBugStatus('Retest')" class="workflow-pill px-3 py-1 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Retest</button>
+            <button onclick="updateBugStatus('Closed')" class="workflow-pill px-3 py-1 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Closed</button>
+        </div>
+
+        <!-- Modal Body (Two-Column Layout) -->
+        <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Left 2 Columns: Main Bug Details -->
+            <div class="md:col-span-2 space-y-6">
+                
+                <!-- Bug Title -->
+                <div>
+                    <h2 id="modalBugTitle" class="text-lg font-bold text-slate-100">Login validation issue on special characters</h2>
+                    <p class="text-xs text-slate-400 mt-1">Created on <span id="modalCreatedAt">2026-09-20</span> by <span id="modalReporter" class="text-slate-300 font-medium">Alex Turner</span> (Env: <span id="modalEnv">Chrome 120 / Windows 11</span>)</p>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Description</h3>
+                    <p id="modalBugDescription" class="text-xs text-slate-300 leading-relaxed bg-[#080b12] p-3.5 rounded-xl border border-slate-800/80">
+                        Each user should be able to log in after filling up matching username and password fields. The application throws 500 error when special characters are used.
+                    </p>
+                </div>
+
+                <!-- Steps to Reproduce -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Steps to Reproduce</h3>
+                    <ol id="modalStepsList" class="list-decimal list-inside text-xs text-slate-300 space-y-1.5 bg-[#080b12] p-3.5 rounded-xl border border-slate-800/80">
+                        <li>Open the app in Chrome browser.</li>
+                        <li>Sign in with input username with special characters.</li>
+                        <li>Click the login button.</li>
+                    </ol>
+                </div>
+
+                <!-- Side-by-Side Comparison Panels -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Expected Result (Green Theme) -->
+                    <div class="bg-emerald-950/20 border border-emerald-900/50 p-3.5 rounded-xl space-y-1.5">
+                        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Expected Result
+                        </h4>
+                        <p id="modalExpectedResult" class="text-xs text-emerald-200/90 leading-relaxed">Inline validation error 'Invalid email format' appears cleanly.</p>
+                    </div>
+
+                    <!-- Actual Result (Red/Purple Theme) -->
+                    <div class="bg-red-950/20 border border-red-900/50 p-3.5 rounded-xl space-y-1.5">
+                        <h4 class="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Actual Result
+                        </h4>
+                        <p id="modalActualResult" class="text-xs text-red-200/90 leading-relaxed">Application throws 500 internal server error and white screen.</p>
+                    </div>
+                </div>
+
+                <!-- Comments & Discussion Section -->
+                <div class="space-y-3 pt-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Comments & Discussion</h3>
+                    <div id="bugCommentsList" class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                        <!-- Dynamic Comments will load here -->
+                        <div class="p-3 bg-[#080b12] border border-slate-800 rounded-xl space-y-1">
+                            <div class="flex justify-between text-[11px]">
+                                <span class="font-bold text-blue-400">Alex Turner</span>
+                                <span class="text-slate-500">20 mins ago</span>
+                            </div>
+                            <p class="text-xs text-slate-300">Checked on Staging v2.1, issue is consistently reproducible.</p>
+                        </div>
+                    </div>
+
+                    <!-- Comment Input Box -->
+                    <div class="flex gap-2 mt-2">
+                        <input type="text" id="bugCommentInput" placeholder="Type a comment..." class="flex-1 bg-[#080b12] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                        <button onclick="postBugCommentModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-blue-600/20">Post</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Sidebar (Linked Work Items & Audit History) -->
+            <div class="space-y-5 bg-[#080b12] p-4 rounded-xl border border-slate-800/80">
+                
+                <!-- Metadata Info -->
+                <div class="space-y-3 text-xs border-b border-slate-800 pb-4">
+                    <div class="flex justify-between"><span class="text-slate-400">Priority:</span> <span id="modalPriority" class="font-semibold text-amber-400">High</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Severity:</span> <span id="modalSeverity" class="font-semibold text-red-400">Major</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Assignee:</span> <span id="modalAssignee" class="font-semibold text-slate-200">QA Engineer</span></div>
+                </div>
+
+                <!-- Linked Work Items -->
+                <div class="space-y-2.5">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Linked Work Items</h4>
+                    <div class="p-2.5 bg-[#0d1322] border border-slate-800 rounded-lg flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="text-blue-400 font-mono font-bold">TC-001</span>
+                            <span class="text-slate-300 truncate max-w-[140px]">Verify Auth Flow</span>
+                        </div>
+                        <span class="text-[10px] px-1.5 py-0.5 bg-emerald-950 text-emerald-300 rounded border border-emerald-800">Passed</span>
+                    </div>
+                </div>
+
+                <!-- Audit History Timeline -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Audit History</h4>
+                    <div id="bugAuditHistory" class="space-y-3 relative before:absolute before:inset-0 before:left-2 before:w-0.5 before:bg-slate-800 text-xs">
+                        <div class="relative pl-5 space-y-0.5">
+                            <div class="absolute left-1 top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-[#080b12]"></div>
+                            <p class="text-slate-300 font-medium">Status changed to <span class="text-blue-400">In Progress</span></p>
+                            <p class="text-[10px] text-slate-500">10 mins ago by Rahul</p>
+                        </div>
+                        <div class="relative pl-5 space-y-0.5">
+                            <div class="absolute left-1 top-1 w-2.5 h-2.5 rounded-full bg-slate-600 ring-4 ring-[#080b12]"></div>
+                            <p class="text-slate-300 font-medium">Bug created</p>
+                            <p class="text-[10px] text-slate-500">2026-09-20 by Alex</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+  <!-- Project Modal -->
+  <div id="projectModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-lg rounded-xl p-6 space-y-4">
+      <h3 class="text-lg font-bold text-white">Add New Project</h3>
+      <form onsubmit="createProject(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Project Name</label>
+          <input id="projName" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Status</label>
+          <select id="projStatus" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+            <option value="Ongoing">Ongoing</option>
+            <option value="Resumed">Resumed</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Progress (%)</label>
+          <input id="projProgress" type="number" min="0" max="100" value="0" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Team Details</label>
+          <input id="projTeam" type="text" placeholder="e.g. Nishit Dubey, Priya Nair" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Expected Outcome</label>
+          <textarea id="projOutcome" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-20" placeholder="Brief project goal/outcome..."></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('projectModal')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Test Case Modal -->
+  <div id="testCaseModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-xl rounded-xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-lg font-bold text-white">Create Test Case</h3>
+      <form onsubmit="createTestCase(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Test Case Title</label>
+          <input id="tcTitle" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Module</label>
+            <input id="tcModule" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Priority</label>
+            <select id="tcPriority" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+              <option value="High">High</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Preconditions</label>
+          <textarea id="tcPreconditions" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Test Steps</label>
+          <textarea id="tcSteps" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Expected Result</label>
+            <textarea id="tcExpected" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Actual Result</label>
+            <textarea id="tcActual" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-16"></textarea>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Assigned Tester</label>
+          <input id="tcTester" type="text" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('testCaseModal')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg">Save Test Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Team Member Modal -->
+  <div id="teamModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-lg rounded-xl p-6 space-y-4">
+      <h3 class="text-lg font-bold text-white">Add Team Member</h3>
+      <form onsubmit="createTeamMember(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Member Name</label>
+          <input id="tmName" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Role</label>
+            <select id="tmRole" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+              <option value="QA Head">QA Head</option>
+              <option value="QA Tester" selected>QA Tester</option>
+              <option value="Developer">Developer</option>
+              <option value="Client">Client</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Status</label>
+            <select id="tmStatus" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+              <option value="Active">Active</option>
+              <option value="Away">Away</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Department</label>
+          <input id="tmDept" type="text" required placeholder="e.g. Quality Engineering" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Assigned Projects</label>
+          <input id="tmProjects" type="text" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('teamModal')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg">Add Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="reportModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-lg rounded-xl p-6 space-y-4">
+      <h3 class="text-lg font-bold text-white">Add Bug Report Entry</h3>
+      <form onsubmit="createReport(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Report Title</label>
+          <input id="repTitle" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Project</label>
+          <input id="repProject" type="text" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Detailed Audit Summary</label>
+          <textarea id="repSummary" required class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white h-24"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('reportModal')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg">Save Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-card border border-slate-800 w-full max-w-md rounded-xl p-6 space-y-4">
+      <h3 class="text-lg font-bold text-white">Reset Password</h3>
+      <p class="text-xs text-slate-400">Enter your email address to receive password reset instructions.</p>
+      <input id="forgotEmail" type="email" placeholder="user@qanexus.com" class="w-full bg-[#080B12] border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('forgotModal')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg">Cancel</button>
+        <button onclick="submitForgot()" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg">Send Link</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+
+    "use strict";
+
+    // =========================================================
+    // QA CORE NEXUS - STABLE FRONTEND CONTROLLER
+    // Keeps the existing UI and works with the Flask API.
+    // =========================================================
+
+    let currentUser = null;
+    let isRegisterMode = false;
+    let currentBugId = null;
+    let severityChartInstance = null;
+    let statusChartInstance = null;
+
+    const state = {
+        projects: [],
+        sprints: [],
+        bugs: [],
+        testCases: [],
+        team: [],
+        reports: [],
+        comments: [],
+        testPlan: {}
+    };
+
+    const API = {
+        projects: "/api/projects",
+        sprints: "/api/sprints",
+        bugs: "/api/bugs",
+        testCases: "/api/test-cases",
+        team: "/api/team",
+        reports: "/api/reports"
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.lucide) lucide.createIcons();
+
+        const savedUser = sessionStorage.getItem("qaNexusUser");
+        if (savedUser) {
+            try {
+                currentUser = JSON.parse(savedUser);
+                showApplication();
+            } catch {
+                sessionStorage.removeItem("qaNexusUser");
+                showLogin();
+            }
+        } else {
+            showLogin();
+        }
+    });
+
+    // =========================================================
+    // AUTHENTICATION
+    // =========================================================
+
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+
+        const title = $("authTitle");
+        const submitBtn = $("authSubmitBtn");
+        const toggleBtn = $("authToggleBtn");
+        const emailField = $("registerEmailField");
+        const roleField = $("registerRoleField");
+        const userInput = $("authInputUser");
+        const emailInput = $("authInputEmail");
+        const roleInput = $("authInputRole");
+
+        if (isRegisterMode) {
+            title.textContent = "Create QA Nexus Account";
+            submitBtn.textContent = "Create Account";
+            toggleBtn.textContent = "Already have an account? Sign In";
+            emailField.classList.remove("hidden");
+            roleField.classList.remove("hidden");
+            userInput.placeholder = "Choose username";
+            emailInput.required = true;
+            roleInput.required = true;
+        } else {
+            title.textContent = "Sign In to QA Core";
+            submitBtn.textContent = "Sign In";
+            toggleBtn.textContent = "Need an account? Register";
+            emailField.classList.add("hidden");
+            roleField.classList.add("hidden");
+            userInput.placeholder = "Username or email";
+            emailInput.required = false;
+            roleInput.required = false;
+        }
+    }
+
+    async function handleAuthSubmit(event) {
+        event.preventDefault();
+
+        const username = $("authInputUser").value.trim();
+        const password = $("authInputPassword").value;
+
+        if (!username || !password) {
+            showToast("Please enter username and password.", "error");
+            return;
+        }
+
+        const submitBtn = $("authSubmitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = isRegisterMode ? "Creating Account..." : "Signing In...";
+
+        try {
+            if (isRegisterMode) {
+                const email = $("authInputEmail").value.trim();
+                const role = $("authInputRole").value;
+
+                if (!email) {
+                    throw new Error("Please enter your email address.");
+                }
+
+                const response = await apiFetch("/api/auth/register", {
+                    method: "POST",
+                    body: { username, email, password, role }
+                });
+
+                if (!response.ok) {
+                    throw new Error(response.data?.error || response.data?.message || "Registration failed.");
+                }
+
+                showToast("Account created successfully. Please sign in.", "success");
+                $("authInputPassword").value = "";
+                $("authInputEmail").value = "";
+                $("authInputRole").value = "QA Tester";
+
+                if (isRegisterMode) toggleAuthMode();
+                $("authInputUser").value = username;
+            } else {
+                const response = await apiFetch("/api/auth/login", {
+                    method: "POST",
+                    body: { username, password }
+                });
+
+                if (!response.ok) {
+                    throw new Error(response.data?.error || response.data?.message || "Invalid credentials.");
+                }
+
+                currentUser = response.data?.user || response.data;
+                sessionStorage.setItem("qaNexusUser", JSON.stringify(currentUser));
+
+                $("authInputPassword").value = "";
+                showApplication();
+                showToast("Login successful. Welcome to QA Nexus.", "success");
+            }
+        } catch (error) {
+            console.error("Authentication error:", error);
+            showToast(error.message || "Unable to complete authentication.", "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = isRegisterMode ? "Create Account" : "Sign In";
+        }
+    }
+
+    function showApplication() {
+        $("authOverlay")?.classList.add("hidden");
+        updateCurrentUser();
+        switchTab("dashboard");
+    }
+
+    function showLogin() {
+        $("authOverlay")?.classList.remove("hidden");
+        if (isRegisterMode) toggleAuthMode();
+    }
+
+    function updateCurrentUser() {
+        if (!currentUser) return;
+
+        const name = currentUser.username || currentUser.name || currentUser.email || "User";
+        $("currentUserName").textContent = name;
+        $("currentUserRole").textContent = currentUser.role || "QA Tester";
+        $("userAvatar").textContent = name.substring(0, 2).toUpperCase();
+    }
+
+    function togglePasswordVisibility() {
+        const input = $("authInputPassword");
+        const icon = $("eyeIcon");
+        if (!input || !icon) return;
+
+        const showing = input.type === "password";
+        input.type = showing ? "text" : "password";
+        icon.setAttribute("data-lucide", showing ? "eye-off" : "eye");
+        if (window.lucide) lucide.createIcons();
+    }
+
+    function logout() {
+        currentUser = null;
+        sessionStorage.removeItem("qaNexusUser");
+        $("authForm")?.reset();
+        isRegisterMode = false;
+
+        $("registerEmailField")?.classList.add("hidden");
+        $("registerRoleField")?.classList.add("hidden");
+        $("authTitle").textContent = "Sign In to QA Core";
+        $("authSubmitBtn").textContent = "Sign In";
+        $("authToggleBtn").textContent = "Need an account? Register";
+
+        showLogin();
+        showToast("You have been logged out.", "info");
+    }
+
+    function openForgotModal() {
+        openModal("forgotModal");
+    }
+
+    function submitForgot() {
+        const email = $("forgotEmail").value.trim();
+        if (!email) {
+            showToast("Please enter your email address.", "error");
+            return;
+        }
+
+        closeModal("forgotModal");
+        $("forgotEmail").value = "";
+        showToast("If the account exists, reset instructions have been requested.", "success");
+    }
+
+    // =========================================================
+    // GENERAL UI
+    // =========================================================
+
+    function switchTab(tabName) {
+        const tabs = ["dashboard", "projects", "sprints", "bugs", "testcases", "testplans", "team", "reports"];
+
+        tabs.forEach((tab) => {
+            const section = $(`tab-${tab}`);
+            const nav = $(`nav-${tab}`);
+
+            section?.classList.add("hidden");
+
+            if (nav) {
+                nav.classList.remove("bg-blue-600", "text-white");
+                nav.classList.add("text-slate-400");
+            }
+        });
+
+        $(`tab-${tabName}`)?.classList.remove("hidden");
+
+        const activeNav = $(`nav-${tabName}`);
+        if (activeNav) {
+            activeNav.classList.remove("text-slate-400");
+            activeNav.classList.add("bg-blue-600", "text-white");
+        }
+
+        if (tabName === "dashboard") loadDashboardData();
+        if (tabName === "projects") loadProjects();
+        if (tabName === "sprints") loadSprints();
+        if (tabName === "bugs") loadBugs();
+        if (tabName === "testcases") loadTestCases();
+        if (tabName === "team") loadTeam();
+        if (tabName === "reports") loadReports();
+        if (tabName === "testplans") loadTestPlan();
+    }
+
+    function openModal(id) {
+        $(id)?.classList.remove("hidden");
+    }
+
+    function closeModal(id) {
+        $(id)?.classList.add("hidden");
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        document.querySelectorAll("[id$='Modal']").forEach((modal) => modal.classList.add("hidden"));
+    });
+
+    function showToast(message, type = "info") {
+        const container = $("toastContainer");
+        if (!container) return;
+
+        const toast = document.createElement("div");
+        const styles = {
+            success: "bg-emerald-950/95 border-emerald-800 text-emerald-200",
+            error: "bg-red-950/95 border-red-800 text-red-200",
+            info: "bg-slate-900 border-slate-800 text-slate-200"
+        };
+
+        toast.className = `p-3.5 rounded-xl shadow-lg border text-xs font-medium flex items-center justify-between gap-3 pointer-events-auto transition-all duration-300 ${styles[type] || styles.info}`;
+        toast.innerHTML = `<span>${escapeHtml(message)}</span><button type="button" class="text-slate-400 hover:text-white text-base leading-none">&times;</button>`;
+        toast.querySelector("button").onclick = () => toast.remove();
+
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add("opacity-0");
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function safeArray(data, keys = []) {
+        if (Array.isArray(data)) return data;
+        for (const key of keys) {
+            if (Array.isArray(data?.[key])) return data[key];
+        }
+        return [];
+    }
+
+    async function apiFetch(url, options = {}) {
+        const config = {
+            method: options.method || "GET",
+            headers: { ...(options.headers || {}) }
+        };
+
+        if (options.body !== undefined) {
+            config.headers["Content-Type"] = "application/json";
+            config.body = JSON.stringify(options.body);
+        }
+
+        const response = await fetch(url, config);
+        let data = null;
+
+        try {
+            data = await response.json();
+        } catch {
+            data = null;
+        }
+
+        return { ok: response.ok, status: response.status, data };
+    }
+
+    function cacheState() {
+        localStorage.setItem("qaNexusLocalState", JSON.stringify(state));
+    }
+
+    function restoreCachedState() {
+        try {
+            const cached = JSON.parse(localStorage.getItem("qaNexusLocalState") || "null");
+            if (!cached) return;
+
+            state.projects = Array.isArray(cached.projects) ? cached.projects : [];
+            state.sprints = Array.isArray(cached.sprints) ? cached.sprints : [];
+            state.bugs = Array.isArray(cached.bugs) ? cached.bugs : [];
+            state.testCases = Array.isArray(cached.testCases) ? cached.testCases : [];
+            state.team = Array.isArray(cached.team) ? cached.team : [];
+            state.reports = Array.isArray(cached.reports) ? cached.reports : [];
+            state.comments = Array.isArray(cached.comments) ? cached.comments : [];
+            state.testPlan = cached.testPlan || {};
+        } catch {
+            localStorage.removeItem("qaNexusLocalState");
+        }
+    }
+
+    // =========================================================
+    // DASHBOARD
+    // =========================================================
+
+    async function loadDashboardData() {
+        await Promise.all([loadProjects(true), loadBugs(true), loadTestCases(true)]);
+
+        const projects = state.projects;
+        const bugs = state.bugs;
+        const testCases = state.testCases;
+
+        const critical = bugs.filter((b) => String(b.severity).toLowerCase() === "critical").length;
+        const resolved = bugs.filter(isResolvedBug).length;
+        const pending = Math.max(0, bugs.length - resolved);
+        const progress = bugs.length ? Math.round((resolved / bugs.length) * 100) : 0;
+
+        $("dashProjects").textContent = projects.length;
+        $("dashTotalBugs").textContent = bugs.length;
+        $("dashCriticalBugs").textContent = critical;
+        $("dashPendingBugs").textContent = pending;
+        $("dashResolvedBugs").textContent = resolved;
+        $("dashTestCases").textContent = testCases.length;
+        $("dashProgressPct").textContent = `${progress}%`;
+        $("dashProgressBar").style.width = `${progress}%`;
+
+        renderDashboardCharts(bugs);
+    }
+
+    function isResolvedBug(bug) {
+        const status = String(bug.status || "").toLowerCase();
+        return status === "resolved" || status === "closed";
+    }
+
+    function renderDashboardCharts(bugs = state.bugs) {
+        if (!window.Chart) return;
+
+        const severityCounts = ["Critical", "High", "Medium", "Low"]
+            .map((severity) => bugs.filter((b) => String(b.severity).toLowerCase() === severity.toLowerCase()).length);
+
+        const pending = bugs.filter((b) => !isResolvedBug(b)).length;
+        const resolved = bugs.filter(isResolvedBug).length;
+
+        const severityCtx = $("severityChart");
+        if (severityCtx) {
+            severityChartInstance?.destroy();
+            severityChartInstance = new Chart(severityCtx, {
+                type: "doughnut",
+                data: {
+                    labels: ["Critical", "High", "Medium", "Low"],
+                    datasets: [{ data: severityCounts, backgroundColor: ["#ef4444", "#f97316", "#eab308", "#3b82f6"] }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: "#94a3b8" } } }
+                }
+            });
+        }
+
+        const statusCtx = $("statusChart");
+        if (statusCtx) {
+            statusChartInstance?.destroy();
+            statusChartInstance = new Chart(statusCtx, {
+                type: "bar",
+                data: {
+                    labels: ["Pending / Open", "Resolved"],
+                    datasets: [{ label: "Defects", data: [pending, resolved], backgroundColor: ["#3b82f6", "#10b981"] }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: "#94a3b8" }, grid: { color: "#1e293b" } },
+                        y: { beginAtZero: true, ticks: { color: "#94a3b8", precision: 0 }, grid: { color: "#1e293b" } }
+                    },
+                    plugins: { legend: { labels: { color: "#94a3b8" } } }
+                }
+            });
+        }
+    }
+
+    // =========================================================
+    // PROJECTS
+    // =========================================================
+
+    async function loadProjects(silent = false) {
+        try {
+            const response = await apiFetch(API.projects);
+            if (response.ok) {
+                state.projects = safeArray(response.data, ["projects", "data"]);
+                cacheState();
+            } else if (!state.projects.length) {
+                restoreCachedState();
+            }
+        } catch {
+            restoreCachedState();
+            if (!silent) showToast("Project API unavailable. Showing saved project data.", "info");
+        }
+
+        renderProjects();
+    }
+
+    function renderProjects() {
+        const grid = $("projectsGrid");
+        if (!grid) return;
+
+        if (!state.projects.length) {
+            grid.innerHTML = emptyState("No projects found.", "folder-kanban");
+            return;
+        }
+
+        grid.innerHTML = state.projects.map((project, index) => {
+            const id = project.id ?? project.project_id ?? index + 1;
+            const progress = clamp(Number(project.progress ?? 0), 0, 100);
+            const status = project.status || "Ongoing";
+            return `
+                <article class="bg-card border border-slate-800 rounded-xl p-5 hover:border-blue-500/40 transition">
+                    <div class="flex justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white">${escapeHtml(project.name || project.title || "Untitled Project")}</h3>
+                            <p class="text-xs text-slate-500 mt-1">${escapeHtml(project.team || project.team_details || "Team not assigned")}</p>
+                        </div>
+                        <span class="text-[10px] px-2 py-1 rounded-md border ${statusClass(status)}">${escapeHtml(status)}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4 min-h-[40px]">${escapeHtml(project.outcome || project.expected_outcome || project.description || "No project outcome provided.")}</p>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span>Progress</span><span>${progress}%</span></div>
+                        <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-blue-600" style="width:${progress}%"></div></div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button type="button" onclick="deleteProject(${JSON.stringify(id)})" class="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 text-red-300 text-[11px] hover:bg-red-900/50">Delete</button>
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function createProject(event) {
+        event.preventDefault();
+
+        const payload = {
+            name: $("projName").value.trim(),
+            status: $("projStatus").value,
+            progress: clamp(Number($("projProgress").value || 0), 0, 100),
+            team: $("projTeam").value.trim(),
+            outcome: $("projOutcome").value.trim()
+        };
+
+        if (!payload.name || !payload.outcome) {
+            showToast("Project name and expected outcome are required.", "error");
+            return;
+        }
+
+        try {
+            const response = await apiFetch(API.projects, { method: "POST", body: payload });
+
+            if (response.ok) {
+                const created = response.data?.project || response.data?.data || response.data;
+                if (created && typeof created === "object" && !Array.isArray(created)) {
+                    state.projects.push(created);
+                } else {
+                    await loadProjects(true);
+                }
+                cacheState();
+                renderProjects();
+                closeModal("projectModal");
+                $("projectModal").querySelector("form")?.reset();
+                showToast("Project created successfully.", "success");
+                await loadDashboardData();
+                return;
+            }
+
+            throw new Error(response.data?.error || "Project API rejected the request.");
+        } catch (error) {
+            const localProject = { id: `local-${Date.now()}`, ...payload };
+            state.projects.push(localProject);
+            cacheState();
+            renderProjects();
+            closeModal("projectModal");
+            $("projectModal").querySelector("form")?.reset();
+            showToast(`Project saved locally because the API is unavailable.`, "info");
+            await loadDashboardData();
+        }
+    }
+
+    async function deleteProject(id) {
+        if (!confirm("Delete this project?")) return;
+
+        try {
+            const response = await apiFetch(`${API.projects}/${encodeURIComponent(id)}`, { method: "DELETE" });
+            if (!response.ok && !String(id).startsWith("local-")) {
+                throw new Error("Delete request failed.");
+            }
+        } catch {
+            // Keep local removal so the UI never gets stuck.
+        }
+
+        state.projects = state.projects.filter((p, index) => String(p.id ?? p.project_id ?? index + 1) !== String(id));
+        cacheState();
+        renderProjects();
+        showToast("Project removed.", "success");
+        await loadDashboardData();
+    }
+
+    // =========================================================
+    // BUGS
+    // =========================================================
+
+    async function loadBugs(silent = false) {
+        try {
+            const response = await apiFetch(API.bugs);
+            if (response.ok) {
+                state.bugs = safeArray(response.data, ["bugs", "data"]);
+                cacheState();
+            } else if (!state.bugs.length) {
+                restoreCachedState();
+            }
+        } catch {
+            restoreCachedState();
+            if (!silent) showToast("Bug API unavailable. Showing saved bug data.", "info");
+        }
+
+        renderBugs();
+        if (!silent) renderDashboardCharts(state.bugs);
+    }
+
+    function renderBugs() {
+        const list = $("bugsList");
+        if (!list) return;
+
+        const controls = `
+            <div class="bg-card border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row gap-3">
+                <input id="bugSearch" oninput="filterBugs()" placeholder="Search bug ID or title..." class="flex-1 bg-[#080B12] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                <select id="bugStatusFilter" onchange="filterBugs()" class="bg-[#080B12] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                    <option value="">All Statuses</option><option>New</option><option>Open</option><option>In Progress</option><option>Resolved</option><option>Retest</option><option>Closed</option>
+                </select>
+                <select id="bugSeverityFilter" onchange="filterBugs()" class="bg-[#080B12] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                    <option value="">All Severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+                </select>
+            </div>
+            <div id="bugRows" class="space-y-3"></div>
+        `;
+
+        list.innerHTML = controls;
+        renderBugRows(state.bugs);
+    }
+
+    function filterBugs() {
+        const query = ($("bugSearch")?.value || "").toLowerCase();
+        const status = $("bugStatusFilter")?.value || "";
+        const severity = $("bugSeverityFilter")?.value || "";
+
+        const filtered = state.bugs.filter((bug, index) => {
+            const id = bug.bug_code || bug.code || `BUG-${1001 + index}`;
+            const title = bug.title || "";
+            return (!query || `${id} ${title}`.toLowerCase().includes(query))
+                && (!status || bug.status === status)
+                && (!severity || bug.severity === severity);
+        });
+
+        renderBugRows(filtered);
+    }
+
+    function renderBugRows(bugs) {
+        const container = $("bugRows");
+        if (!container) return;
+
+        if (!bugs.length) {
+            container.innerHTML = emptyState("No bugs match the current filters.", "bug");
+            return;
+        }
+
+        container.innerHTML = bugs.map((bug, index) => {
+            const realIndex = state.bugs.indexOf(bug);
+            const id = bug.id ?? bug.bug_id ?? `local-${realIndex}`;
+            const code = bug.bug_code || bug.code || `BUG-${1001 + realIndex}`;
+            const status = bug.status || "Open";
+            const severity = bug.severity || "Medium";
+
+            return `
+                <article class="bg-card border border-slate-800 rounded-xl p-4 hover:border-blue-500/30 transition">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                        <div class="w-24 shrink-0"><span class="font-mono text-xs font-bold text-blue-400">${escapeHtml(code)}</span></div>
+                        <div class="flex-1 min-w-0">
+                            <button type="button" onclick="openBugDetailModal(${JSON.stringify(id)})" class="text-left text-sm font-semibold text-white hover:text-blue-400 truncate block max-w-full">${escapeHtml(bug.title || "Untitled bug")}</button>
+                            <p class="text-[11px] text-slate-500 mt-1">${escapeHtml(bug.project || "Unassigned project")} · Tester: ${escapeHtml(bug.tester || bug.reporter || "Unassigned")} · Developer: ${escapeHtml(bug.developer || bug.assigned_developer || "Unassigned")}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-semibold border ${severityClass(severity)}">${escapeHtml(severity)}</span>
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-semibold border ${statusClass(status)}">${escapeHtml(status)}</span>
+                        <button type="button" onclick="openBugDetailModal(${JSON.stringify(id)})" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-[11px] hover:bg-slate-700">View</button>
+                        <button type="button" onclick="deleteBug(${JSON.stringify(id)})" class="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 text-red-300 text-[11px] hover:bg-red-900/50">Delete</button>
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function createBug(event) {
+        event.preventDefault();
+
+        const payload = {
+            title: $("bugTitle").value.trim(),
+            project: $("bugProject").value.trim(),
+            severity: $("bugSeverity").value,
+            status: "Open",
+            description: $("bugDesc").value.trim(),
+            steps: $("bugSteps").value.trim(),
+            expected_result: $("bugExpected").value.trim(),
+            actual_result: $("bugActual").value.trim(),
+            sprint_notes: $("bugSprintNotes").value.trim(),
+            tester: $("bugTester").value.trim(),
+            developer: $("bugDev").value.trim()
+        };
+
+        if (!payload.title || !payload.project || !payload.expected_result || !payload.actual_result) {
+            showToast("Title, project, expected result and actual result are required.", "error");
+            return;
+        }
+
+        try {
+            const response = await apiFetch(API.bugs, { method: "POST", body: payload });
+            if (!response.ok) throw new Error(response.data?.error || "Bug API rejected the request.");
+
+            const created = response.data?.bug || response.data?.data || response.data;
+            if (created && typeof created === "object" && !Array.isArray(created)) {
+                state.bugs.push(created);
+            } else {
+                await loadBugs(true);
+            }
+
+            cacheState();
+            closeModal("bugModal");
+            $("bugModal").querySelector("form")?.reset();
+            renderBugs();
+            showToast("Bug logged successfully.", "success");
+            await loadDashboardData();
+        } catch {
+            const localBug = { id: `local-${Date.now()}`, bug_code: `BUG-${1001 + state.bugs.length}`, created_at: new Date().toISOString().slice(0, 10), ...payload };
+            state.bugs.push(localBug);
+            cacheState();
+            closeModal("bugModal");
+            $("bugModal").querySelector("form")?.reset();
+            renderBugs();
+            showToast("Bug saved locally because the API is unavailable.", "info");
+            await loadDashboardData();
+        }
+    }
+
+    async function deleteBug(id) {
+        if (!confirm("Delete this bug?")) return;
+
+        try {
+            const response = await apiFetch(`${API.bugs}/${encodeURIComponent(id)}`, { method: "DELETE" });
+            if (!response.ok && !String(id).startsWith("local-")) throw new Error("Delete failed.");
+        } catch {}
+
+        state.bugs = state.bugs.filter((bug, index) => String(bug.id ?? bug.bug_id ?? `local-${index}`) !== String(id));
+        cacheState();
+        closeModal("bugDetailModal");
+        renderBugs();
+        showToast("Bug removed.", "success");
+        await loadDashboardData();
+    }
+
+    async function openBugDetailModal(bugId) {
+        currentBugId = bugId;
+
+        let bug = state.bugs.find((item, index) =>
+            String(item.id ?? item.bug_id ?? `local-${index}`) === String(bugId)
+        );
+
+        try {
+            const response = await apiFetch(`${API.bugs}/${encodeURIComponent(bugId)}`);
+            if (response.ok) bug = response.data?.bug || response.data?.data || response.data || bug;
+        } catch {}
+
+        if (!bug) {
+            showToast("Bug details could not be found.", "error");
+            return;
+        }
+
+        const index = state.bugs.indexOf(bug);
+        const code = bug.bug_code || bug.code || `BUG-${1001 + Math.max(index, 0)}`;
+
+        $("modalBugIdTag").textContent = code;
+        $("modalProjectName").textContent = bug.project || "Unassigned Project";
+        $("modalSprintName").textContent = bug.sprint || "Current Sprint";
+        $("modalBugTitle").textContent = bug.title || "Untitled bug";
+        $("modalCreatedAt").textContent = formatDate(bug.created_at);
+        $("modalReporter").textContent = bug.reporter || bug.tester || "QA Team";
+        $("modalEnv").textContent = bug.environment || "QA Environment";
+        $("modalBugDescription").textContent = bug.description || "No description provided.";
+
+        const steps = String(bug.steps || bug.steps_to_reproduce || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+        $("modalStepsList").innerHTML = steps.length
+            ? steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")
+            : "<li>No reproduction steps provided.</li>";
+
+        $("modalExpectedResult").textContent = bug.expected_result || bug.expected || "N/A";
+        $("modalActualResult").textContent = bug.actual_result || bug.actual || "N/A";
+        $("modalPriority").textContent = bug.priority || "Medium";
+        $("modalSeverity").textContent = bug.severity || "Medium";
+        $("modalAssignee").textContent = bug.developer || bug.assigned_developer || "Unassigned";
+
+        const comments = Array.isArray(bug.comments) ? bug.comments : state.comments.filter((c) => String(c.bugId) === String(bugId));
+        $("bugCommentsList").innerHTML = comments.length
+            ? comments.map((c) => `
+                <div class="p-3 bg-[#080b12] border border-slate-800 rounded-xl space-y-1">
+                    <div class="flex justify-between text-[11px]">
+                        <span class="font-bold text-blue-400">${escapeHtml(c.author || "QA Team")}</span>
+                        <span class="text-slate-500">${escapeHtml(c.time || "Just now")}</span>
+                    </div>
+                    <p class="text-xs text-slate-300">${escapeHtml(c.text || c.comment || "")}</p>
+                </div>`).join("")
+            : `<p class="text-xs text-slate-500 italic">No comments yet. Be the first to comment!</p>`;
+
+        const history = Array.isArray(bug.audit_history) ? bug.audit_history : [];
+        $("bugAuditHistory").innerHTML = history.length
+            ? history.map((item) => `
+                <div class="relative pl-5 space-y-0.5">
+                    <div class="absolute left-1 top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-[#080b12]"></div>
+                    <p class="text-slate-300 font-medium">${escapeHtml(item.message || item.action || "Bug updated")}</p>
+                    <p class="text-[10px] text-slate-500">${escapeHtml(item.time || "")}</p>
+                </div>`).join("")
+            : `<div class="relative pl-5 space-y-0.5"><div class="absolute left-1 top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-[#080b12]"></div><p class="text-slate-300 font-medium">Bug opened in QA Nexus</p><p class="text-[10px] text-slate-500">${escapeHtml(formatDate(bug.created_at))}</p></div>`;
+
+        $("bugDetailModal").classList.remove("hidden");
+    }
+
+    async function updateBugStatus(newStatus) {
+        if (currentBugId === null || currentBugId === undefined) return;
+
+        let updated = false;
+
+        try {
+            const response = await apiFetch(`${API.bugs}/${encodeURIComponent(currentBugId)}/status`, {
+                method: "POST",
+                body: { status: newStatus }
+            });
+            updated = response.ok;
+        } catch {}
+
+        const bug = state.bugs.find((item, index) =>
+            String(item.id ?? item.bug_id ?? `local-${index}`) === String(currentBugId)
+        );
+
+        if (bug) {
+            bug.status = newStatus;
+            updated = true;
+        }
+
+        if (updated) {
+            cacheState();
+            renderBugs();
+            await loadDashboardData();
+            await openBugDetailModal(currentBugId);
+            showToast(`Bug status changed to ${newStatus}.`, "success");
+        } else {
+            showToast("Unable to update bug status.", "error");
+        }
+    }
+
+    async function postBugCommentModal() {
+        const input = $("bugCommentInput");
+        const commentText = input.value.trim();
+
+        if (!commentText || currentBugId === null) return;
+
+        const author = currentUser?.username || currentUser?.name || "QA Team";
+        const comment = {
+            bugId: currentBugId,
+            author,
+            text: commentText,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        };
+
+        let sent = false;
+
+        try {
+            const response = await apiFetch(`${API.bugs}/${encodeURIComponent(currentBugId)}/comments`, {
+                method: "POST",
+                body: { comment: commentText }
+            });
+            sent = response.ok;
+        } catch {}
+
+        state.comments.push(comment);
+        const bug = state.bugs.find((item, index) =>
+            String(item.id ?? item.bug_id ?? `local-${index}`) === String(currentBugId)
+        );
+        if (bug) {
+            bug.comments = Array.isArray(bug.comments) ? bug.comments : [];
+            bug.comments.push(comment);
+        }
+
+        cacheState();
+        input.value = "";
+        await openBugDetailModal(currentBugId);
+        showToast(sent ? "Comment posted." : "Comment saved locally.", sent ? "success" : "info");
+    }
+
+    // =========================================================
+    // TEST CASES
+    // =========================================================
+
+    async function loadTestCases(silent = false) {
+        try {
+            const response = await apiFetch(API.testCases);
+            if (response.ok) {
+                state.testCases = safeArray(response.data, ["test_cases", "testCases", "data"]);
+                cacheState();
+            } else if (!state.testCases.length) {
+                restoreCachedState();
+            }
+        } catch {
+            restoreCachedState();
+            if (!silent) showToast("Test case API unavailable. Showing saved data.", "info");
+        }
+
+        renderTestCases();
+    }
+
+    function renderTestCases() {
+        const list = $("testCasesList");
+        if (!list) return;
+
+        if (!state.testCases.length) {
+            list.innerHTML = emptyState("No test cases found.", "file-check-2");
+            return;
+        }
+
+        list.innerHTML = state.testCases.map((tc, index) => {
+            const id = tc.id ?? tc.test_case_id ?? `local-${index}`;
+            const status = tc.status || "Not Run";
+
+            return `
+                <article class="bg-card border border-slate-800 rounded-xl p-4">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                        <span class="font-mono text-xs font-bold text-blue-400">TC-${String(index + 1).padStart(3, "0")}</span>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-semibold text-white">${escapeHtml(tc.title || tc.name || "Untitled test case")}</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">Module: ${escapeHtml(tc.module || "General")} · Tester: ${escapeHtml(tc.tester || tc.assigned_tester || "Unassigned")}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-semibold border ${statusClass(status)}">${escapeHtml(status)}</span>
+                        <button type="button" onclick="deleteTestCase(${JSON.stringify(id)})" class="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 text-red-300 text-[11px]">Delete</button>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-3 mt-4">
+                        <div class="bg-[#080B12] border border-slate-800 rounded-lg p-3"><p class="text-[10px] text-emerald-400 font-bold uppercase">Expected</p><p class="text-xs text-slate-300 mt-1">${escapeHtml(tc.expected_result || tc.expected || "N/A")}</p></div>
+                        <div class="bg-[#080B12] border border-slate-800 rounded-lg p-3"><p class="text-[10px] text-red-400 font-bold uppercase">Actual</p><p class="text-xs text-slate-300 mt-1">${escapeHtml(tc.actual_result || tc.actual || "N/A")}</p></div>
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function createTestCase(event) {
+        event.preventDefault();
+
+        const payload = {
+            title: $("tcTitle").value.trim(),
+            module: $("tcModule").value.trim(),
+            priority: $("tcPriority").value,
+            preconditions: $("tcPreconditions").value.trim(),
+            steps: $("tcSteps").value.trim(),
+            expected_result: $("tcExpected").value.trim(),
+            actual_result: $("tcActual").value.trim(),
+            tester: $("tcTester").value.trim(),
+            status: "Not Run"
+        };
+
+        if (!payload.title || !payload.module || !payload.expected_result || !payload.actual_result) {
+            showToast("Title, module, expected result and actual result are required.", "error");
+            return;
+        }
+
+        try {
+            const response = await apiFetch(API.testCases, { method: "POST", body: payload });
+            if (!response.ok) throw new Error();
+
+            const created = response.data?.test_case || response.data?.testCase || response.data?.data || response.data;
+            if (created && typeof created === "object" && !Array.isArray(created)) {
+                state.testCases.push(created);
+            } else {
+                await loadTestCases(true);
+            }
+
+            cacheState();
+            renderTestCases();
+            closeModal("testCaseModal");
+            $("testCaseModal").querySelector("form")?.reset();
+            showToast("Test case created successfully.", "success");
+            await loadDashboardData();
+        } catch {
+            state.testCases.push({ id: `local-${Date.now()}`, ...payload });
+            cacheState();
+            renderTestCases();
+            closeModal("testCaseModal");
+            $("testCaseModal").querySelector("form")?.reset();
+            showToast("Test case saved locally because the API is unavailable.", "info");
+            await loadDashboardData();
+        }
+    }
+
+    async function deleteTestCase(id) {
+        if (!confirm("Delete this test case?")) return;
+
+        try {
+            const response = await apiFetch(`${API.testCases}/${encodeURIComponent(id)}`, { method: "DELETE" });
+            if (!response.ok && !String(id).startsWith("local-")) throw new Error();
+        } catch {}
+
+        state.testCases = state.testCases.filter((tc, index) => String(tc.id ?? tc.test_case_id ?? `local-${index}`) !== String(id));
+        cacheState();
+        renderTestCases();
+        showToast("Test case removed.", "success");
+        await loadDashboardData();
+    }
+
+    // =========================================================
+    // TEST PLAN + SPRINT DISCUSSION
+    // =========================================================
+
+    function loadTestPlan() {
+        restoreCachedState();
+
+        if (state.testPlan.scope !== undefined) $("tpScope").value = state.testPlan.scope;
+        if (state.testPlan.entry !== undefined) $("tpEntry").value = state.testPlan.entry;
+        if (state.testPlan.exit !== undefined) $("tpExit").value = state.testPlan.exit;
+
+        renderDiscussion();
+    }
+
+    function saveTestPlan() {
+        state.testPlan = {
+            scope: $("tpScope").value.trim(),
+            entry: $("tpEntry").value.trim(),
+            exit: $("tpExit").value.trim(),
+            updatedAt: new Date().toISOString()
+        };
+        cacheState();
+        showToast("Test plan saved successfully.", "success");
+    }
+
+    function postSprintComment() {
+        const input = $("sprintCommentInput");
+        const text = input.value.trim();
+        if (!text) {
+            showToast("Enter a discussion comment first.", "error");
+            return;
+        }
+
+        state.comments.push({
+            sprint: true,
+            author: currentUser?.username || currentUser?.name || "QA Team",
+            text,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        });
+
+        cacheState();
+        input.value = "";
+        renderDiscussion();
+        showToast("Sprint comment posted.", "success");
+    }
+
+    function renderDiscussion() {
+        const stream = $("discussionStream");
+        if (!stream) return;
+
+        const sprintComments = state.comments.filter((c) => c.sprint);
+        if (!sprintComments.length) return;
+
+        stream.innerHTML = sprintComments.map((c) => `
+            <div class="p-3 bg-[#080B12] border border-slate-800 rounded-lg space-y-1">
+                <div class="flex justify-between text-[11px]">
+                    <span class="font-bold text-blue-400">${escapeHtml(c.author)}</span>
+                    <span class="text-slate-500">${escapeHtml(c.time)}</span>
+                </div>
+                <p class="text-xs text-slate-300">${escapeHtml(c.text)}</p>
+            </div>
+        `).join("");
+
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    // =========================================================
+    // TEAM
+    // =========================================================
+
+    async function loadTeam(silent = false) {
+        try {
+            const response = await apiFetch(API.team);
+            if (response.ok) {
+                state.team = safeArray(response.data, ["team", "members", "data"]);
+                cacheState();
+            } else if (!state.team.length) {
+                restoreCachedState();
+            }
+        } catch {
+            restoreCachedState();
+            if (!silent) showToast("Team API unavailable. Showing saved team data.", "info");
+        }
+
+        renderTeam();
+    }
+
+    function renderTeam() {
+        const grid = $("teamGrid");
+        if (!grid) return;
+
+        if (!state.team.length) {
+            grid.innerHTML = emptyState("No team members found.", "users");
+            return;
+        }
+
+        grid.innerHTML = state.team.map((member, index) => {
+            const id = member.id ?? member.user_id ?? `local-${index}`;
+            const name = member.name || member.username || "Team Member";
+            const role = member.role || "QA Tester";
+            const status = member.status || "Active";
+
+            return `
+                <article class="bg-card border border-slate-800 rounded-xl p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-xs">${escapeHtml(name.substring(0,2).toUpperCase())}</div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-semibold text-white">${escapeHtml(name)}</h3>
+                            <p class="text-[11px] text-blue-400">${escapeHtml(role)}</p>
+                        </div>
+                        <span class="text-[10px] px-2 py-1 rounded-md border ${statusClass(status)}">${escapeHtml(status)}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4">Department: ${escapeHtml(member.department || member.dept || "Not specified")}</p>
+                    <p class="text-xs text-slate-500 mt-1">Projects: ${escapeHtml(member.projects || member.assigned_projects || "Not assigned")}</p>
+                    <div class="flex justify-end mt-4"><button type="button" onclick="deleteTeamMember(${JSON.stringify(id)})" class="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 text-red-300 text-[11px]">Remove</button></div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function createTeamMember(event) {
+        event.preventDefault();
+
+        const payload = {
+            name: $("tmName").value.trim(),
+            role: $("tmRole").value,
+            status: $("tmStatus").value,
+            department: $("tmDept").value.trim(),
+            projects: $("tmProjects").value.trim()
+        };
+
+        if (!payload.name || !payload.department) {
+            showToast("Member name and department are required.", "error");
+            return;
+        }
+
+        try {
+            let response = await apiFetch(API.team, { method: "POST", body: payload });
+
+            if (!response.ok) {
+                response = await apiFetch("/api/team-members", { method: "POST", body: payload });
+            }
+
+            if (!response.ok) throw new Error();
+
+            const created = response.data?.member || response.data?.team_member || response.data?.data || response.data;
+            if (created && typeof created === "object" && !Array.isArray(created)) state.team.push(created);
+            else await loadTeam(true);
+
+            cacheState();
+            renderTeam();
+            closeModal("teamModal");
+            $("teamModal").querySelector("form")?.reset();
+            showToast("Team member added successfully.", "success");
+        } catch {
+            state.team.push({ id: `local-${Date.now()}`, ...payload });
+            cacheState();
+            renderTeam();
+            closeModal("teamModal");
+            $("teamModal").querySelector("form")?.reset();
+            showToast("Team member saved locally because the API is unavailable.", "info");
+        }
+    }
+
+    async function deleteTeamMember(id) {
+        if (!confirm("Remove this team member?")) return;
+
+        try {
+            const response = await apiFetch(`${API.team}/${encodeURIComponent(id)}`, { method: "DELETE" });
+            if (!response.ok && !String(id).startsWith("local-")) throw new Error();
+        } catch {}
+
+        state.team = state.team.filter((member, index) => String(member.id ?? member.user_id ?? `local-${index}`) !== String(id));
+        cacheState();
+        renderTeam();
+        showToast("Team member removed.", "success");
+    }
+
+    // =========================================================
+    // REPORTS
+    // =========================================================
+
+    async function loadReports(silent = false) {
+        try {
+            const response = await apiFetch(API.reports);
+            if (response.ok) {
+                state.reports = safeArray(response.data, ["reports", "data"]);
+                cacheState();
+            } else if (!state.reports.length) {
+                restoreCachedState();
+            }
+        } catch {
+            restoreCachedState();
+            if (!silent) showToast("Reports API unavailable. Showing saved reports.", "info");
+        }
+
+        renderReports();
+    }
+
+    function renderReports() {
+        const list = $("reportsList");
+        if (!list) return;
+
+        if (!state.reports.length) {
+            const total = state.bugs.length;
+            const resolved = state.bugs.filter(isResolvedBug).length;
+            const critical = state.bugs.filter((b) => b.severity === "Critical").length;
+            list.innerHTML = `
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-card border border-slate-800 rounded-xl p-5"><p class="text-xs text-slate-400">Total Defects</p><p class="text-2xl font-bold text-white mt-2">${total}</p></div>
+                    <div class="bg-card border border-slate-800 rounded-xl p-5"><p class="text-xs text-slate-400">Resolved Defects</p><p class="text-2xl font-bold text-green-400 mt-2">${resolved}</p></div>
+                    <div class="bg-card border border-slate-800 rounded-xl p-5"><p class="text-xs text-slate-400">Critical Defects</p><p class="text-2xl font-bold text-red-400 mt-2">${critical}</p></div>
+                </div>
+                ${emptyState("No custom audit reports yet.")}
+            `;
+            return;
+        }
+
+        list.innerHTML = state.reports.map((report, index) => {
+            const id = report.id ?? `local-${index}`;
+            return `
+                <article class="bg-card border border-slate-800 rounded-xl p-5">
+                    <div class="flex justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-white">${escapeHtml(report.title || "QA Report")}</h3>
+                            <p class="text-[11px] text-blue-400 mt-1">${escapeHtml(report.project || "General")}</p>
+                        </div>
+                        <button type="button" onclick="deleteReport(${JSON.stringify(id)})" class="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 text-red-300 text-[11px]">Delete</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4 leading-relaxed">${escapeHtml(report.summary || report.description || "No summary provided.")}</p>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function createReport(event) {
+        event.preventDefault();
+
+        const payload = {
+            title: $("repTitle").value.trim(),
+            project: $("repProject").value.trim(),
+            summary: $("repSummary").value.trim()
+        };
+
+        if (!payload.title || !payload.project || !payload.summary) {
+            showToast("All report fields are required.", "error");
+            return;
+        }
+
+        try {
+            const response = await apiFetch(API.reports, { method: "POST", body: payload });
+            if (!response.ok) throw new Error();
+
+            const created = response.data?.report || response.data?.data || response.data;
+            if (created && typeof created === "object" && !Array.isArray(created)) state.reports.push(created);
+            else await loadReports(true);
+
+            cacheState();
+            renderReports();
+            closeModal("reportModal");
+            $("reportModal").querySelector("form")?.reset();
+            showToast("Report saved successfully.", "success");
+        } catch {
+            state.reports.push({ id: `local-${Date.now()}`, ...payload, created_at: new Date().toISOString() });
+            cacheState();
+            renderReports();
+            closeModal("reportModal");
+            $("reportModal").querySelector("form")?.reset();
+            showToast("Report saved locally because the API is unavailable.", "info");
+        }
+    }
+
+    async function deleteReport(id) {
+        if (!confirm("Delete this report?")) return;
+
+        try {
+            const response = await apiFetch(`${API.reports}/${encodeURIComponent(id)}`, { method: "DELETE" });
+            if (!response.ok && !String(id).startsWith("local-")) throw new Error();
+        } catch {}
+
+        state.reports = state.reports.filter((report, index) => String(report.id ?? `local-${index}`) !== String(id));
+        cacheState();
+        renderReports();
+        showToast("Report removed.", "success");
+    }
+
+    // =========================================================
+    // SPRINT MANAGEMENT
+    // =========================================================
+
+    async function loadSprints(silent = false) {
+        try {
+            const [sprintResponse, projectResponse, bugResponse, testResponse] = await Promise.all([
+                apiFetch(API.sprints), apiFetch(API.projects), apiFetch(API.bugs), apiFetch(API.testCases)
+            ]);
+            if (!sprintResponse.ok) throw new Error(sprintResponse.data?.error || "Unable to load sprints");
+            state.sprints = safeArray(sprintResponse.data, ["sprints", "data"]);
+            if (projectResponse.ok) state.projects = safeArray(projectResponse.data, ["projects", "data"]);
+            if (bugResponse.ok) state.bugs = safeArray(bugResponse.data, ["bugs", "data"]);
+            if (testResponse.ok) state.testCases = safeArray(testResponse.data, ["test_cases", "testCases", "data"]);
+            cacheState();
+        } catch (error) {
+            restoreCachedState();
+            if (!silent) showToast(error.message || "Sprint API unavailable. Showing saved data.", "info");
+        }
+        renderSprints();
+    }
+
+    function sprintWork(sprint) {
+        const name = String(sprint.name || "").toLowerCase();
+        const project = String(sprint.project || "").toLowerCase();
+        const bugs = state.bugs.filter((b) => String(b.sprint || "").toLowerCase() === name && (!project || String(b.project || "").toLowerCase() === project));
+        const tests = state.testCases.filter((t) => String(t.sprint || "").toLowerCase() === name && (!project || String(t.project || "").toLowerCase() === project));
+        const doneBugs = bugs.filter((b) => ["resolved", "closed"].includes(String(b.status || "").toLowerCase())).length;
+        const doneTests = tests.filter((t) => String(t.test_result || t.status || "").toLowerCase() === "passed").length;
+        const total = bugs.length + tests.length;
+        const completed = doneBugs + doneTests;
+        return { bugs: bugs.length, tests: tests.length, doneBugs, doneTests, total, completed, progress: total ? Math.round(completed / total * 100) : (String(sprint.status).toLowerCase() === "completed" ? 100 : 0) };
+    }
+
+    function renderSprints() {
+        const grid = $("sprintsGrid");
+        if (!grid) return;
+        const search = String($("sprintSearch")?.value || "").trim().toLowerCase();
+        const status = $("sprintStatusFilter")?.value || "All";
+        const sprints = [...(state.sprints || [])].sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+        $("sprintMetricTotal").textContent = sprints.length;
+        $("sprintMetricActive").textContent = sprints.filter(s => String(s.status).toLowerCase() === "active").length;
+        $("sprintMetricPlanned").textContent = sprints.filter(s => String(s.status).toLowerCase() === "planned").length;
+        $("sprintMetricCompleted").textContent = sprints.filter(s => String(s.status).toLowerCase() === "completed").length;
+        const filtered = sprints.filter(s => {
+            const matchesSearch = [s.name, s.project, s.sprint_lead, s.goal, s.sprint_code].some(v => String(v || "").toLowerCase().includes(search));
+            return matchesSearch && (status === "All" || String(s.status || "Planned") === status);
+        });
+        if (!filtered.length) {
+            grid.innerHTML = emptyState(sprints.length ? "No sprints match your filters." : "No sprints yet. Add your first sprint.", "calendar-range");
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+        grid.innerHTML = filtered.map((sprint) => {
+            const work = sprintWork(sprint);
+            const id = Number(sprint.id);
+            const statusOptions = ["Planned", "Active", "On Hold", "Completed"].map(x => `<option ${String(sprint.status || "Planned") === x ? "selected" : ""}>${x}</option>`).join("");
+            const team = Array.isArray(sprint.team_members) ? sprint.team_members.join(", ") : (sprint.team_members || "Not assigned");
+            return `<article class="bg-card border border-slate-800 rounded-xl p-5 hover:border-blue-500/40 transition space-y-4">
+              <div class="flex justify-between items-start gap-3"><div><div class="flex items-center gap-2"><span class="text-[10px] text-blue-300 bg-blue-950/60 border border-blue-900 px-2 py-1 rounded">${escapeHtml(sprint.sprint_code || `SPR-${String(id).padStart(3,"0")}`)}</span><span class="text-[10px] px-2 py-1 rounded-md border ${statusClass(sprint.status || "Planned")}">${escapeHtml(sprint.status || "Planned")}</span></div><h3 class="text-base font-bold text-white mt-2">${escapeHtml(sprint.name || "Untitled Sprint")}</h3><p class="text-xs text-slate-400 mt-1">${escapeHtml(sprint.project || "No project selected")}</p></div><div class="flex gap-1"><button type="button" onclick="editSprint(${id})" class="px-2.5 py-1.5 text-[11px] rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800">Edit</button><button type="button" onclick="deleteSprint(${id})" class="px-2.5 py-1.5 text-[11px] rounded-lg border border-red-900/60 text-red-300 hover:bg-red-950/50">Delete</button></div></div>
+              <p class="text-xs text-slate-400 min-h-[32px]">${escapeHtml(sprint.goal || "No sprint goal added yet.")}</p>
+              <div class="grid grid-cols-2 gap-3 text-xs"><div class="bg-[#080B12] rounded-lg p-3"><p class="text-slate-500">Start date</p><p class="text-slate-200 mt-1">${escapeHtml(sprint.start_date || "Not set")}</p></div><div class="bg-[#080B12] rounded-lg p-3"><p class="text-slate-500">End date</p><p class="text-slate-200 mt-1">${escapeHtml(sprint.end_date || "Not set")}</p></div></div>
+              <div class="flex flex-wrap justify-between gap-2 text-[11px] text-slate-400"><span><i data-lucide="user-round" class="inline w-3.5 h-3.5 mr-1"></i>${escapeHtml(sprint.sprint_lead || "QA Team")}</span><span><i data-lucide="users" class="inline w-3.5 h-3.5 mr-1"></i>${escapeHtml(team)}</span></div>
+              <div class="grid grid-cols-3 gap-2"><div class="rounded-lg bg-[#080B12] p-2.5"><p class="text-[10px] text-slate-500">Linked bugs</p><p class="text-sm font-bold text-white">${work.bugs}</p></div><div class="rounded-lg bg-[#080B12] p-2.5"><p class="text-[10px] text-slate-500">Test cases</p><p class="text-sm font-bold text-white">${work.tests}</p></div><div class="rounded-lg bg-[#080B12] p-2.5"><p class="text-[10px] text-slate-500">Completed work</p><p class="text-sm font-bold text-white">${work.completed}/${work.total}</p></div></div>
+              <div><div class="flex justify-between items-center text-[10px] text-slate-500 mb-1"><span>Work completion</span><span>${work.progress}%</span></div><div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full" style="width:${work.progress}%"></div></div></div>
+              <div class="flex items-center justify-between border-t border-slate-800 pt-3"><span class="text-[10px] text-slate-500">Quick status</span><select aria-label="Change sprint status" onchange="updateSprintStatus(${id}, this.value)" class="bg-[#080B12] border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] text-white">${statusOptions}</select></div>
+            </article>`;
+        }).join("");
+        if (window.lucide) lucide.createIcons();
+    }
+
+    async function openSprintModal(id = null) {
+        const form = $("sprintForm");
+        form.reset();
+        $("sprintEditId").value = id ?? "";
+        $("sprintModalTitle").textContent = id ? "Edit Sprint" : "Add Sprint";
+        $("sprintSaveButton").textContent = id ? "Save Changes" : "Create Sprint";
+        const projectSelect = $("sprintProject");
+        if (!state.projects.length) await loadProjects(true);
+        projectSelect.innerHTML = (state.projects || []).map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");
+        if (!projectSelect.options.length) projectSelect.innerHTML = `<option value="E-Commerce Platform">E-Commerce Platform</option>`;
+        if (id) {
+            const sprint = state.sprints.find(s => Number(s.id) === Number(id));
+            if (!sprint) return showToast("Sprint not found.", "error");
+            $("sprintName").value = sprint.name || "";
+            $("sprintProject").value = sprint.project || projectSelect.options[0]?.value || "";
+            $("sprintStartDate").value = sprint.start_date || "";
+            $("sprintEndDate").value = sprint.end_date || "";
+            $("sprintLead").value = sprint.sprint_lead || "";
+            $("sprintStatus").value = sprint.status || "Planned";
+            $("sprintGoal").value = sprint.goal || "";
+            $("sprintTeamMembers").value = Array.isArray(sprint.team_members) ? sprint.team_members.join(", ") : (sprint.team_members || "");
+        } else {
+            const n = (state.sprints || []).length + 1;
+            $("sprintName").value = `Sprint ${n}`;
+            $("sprintStatus").value = "Planned";
+            const today = new Date();
+            const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+            const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 13);
+            $("sprintStartDate").value = start.toISOString().slice(0, 10);
+            $("sprintEndDate").value = end.toISOString().slice(0, 10);
+        }
+        openModal("sprintModal");
+    }
+
+    function editSprint(id) { openSprintModal(id); }
+
+    async function saveSprint(event) {
+        event.preventDefault();
+        const id = $("sprintEditId").value;
+        const payload = {
+            name: $("sprintName").value.trim(), project: $("sprintProject").value,
+            start_date: $("sprintStartDate").value, end_date: $("sprintEndDate").value,
+            sprint_lead: $("sprintLead").value.trim() || "QA Team", status: $("sprintStatus").value,
+            goal: $("sprintGoal").value.trim(), team_members: $("sprintTeamMembers").value.split(",").map(x => x.trim()).filter(Boolean),
+            updated_by: currentUser?.username || currentUser?.name || "QA Team"
+        };
+        if (!payload.name || !payload.project || !payload.start_date || !payload.end_date) return showToast("Name, project, start date, and end date are required.", "error");
+        if (payload.end_date < payload.start_date) return showToast("End date cannot be earlier than start date.", "error");
+        const duplicate = state.sprints.some(s => String(s.name).toLowerCase() === payload.name.toLowerCase() && String(s.id) !== String(id));
+        if (duplicate) return showToast("A sprint with this name already exists.", "error");
+        try {
+            const response = await apiFetch(id ? `${API.sprints}/${encodeURIComponent(id)}` : API.sprints, { method: id ? "PATCH" : "POST", body: payload });
+            if (!response.ok) throw new Error(response.data?.error || "Could not save sprint.");
+            closeModal("sprintModal");
+            showToast(id ? "Sprint updated successfully." : "Sprint created successfully.", "success");
+            await loadSprints(true);
+        } catch (error) {
+            showToast(error.message || "Unable to save sprint. Check the Flask server.", "error");
+        }
+    }
+
+    async function updateSprintStatus(id, status) {
+        try {
+            const response = await apiFetch(`${API.sprints}/${encodeURIComponent(id)}`, { method: "PATCH", body: { status, updated_by: currentUser?.username || "QA Team" } });
+            if (!response.ok) throw new Error(response.data?.error || "Status update failed.");
+            const sprint = state.sprints.find(s => Number(s.id) === Number(id));
+            if (sprint) sprint.status = status;
+            cacheState(); renderSprints();
+            showToast("Sprint status updated.", "success");
+        } catch (error) {
+            showToast(error.message || "Unable to update sprint status.", "error");
+            await loadSprints(true);
+        }
+    }
+
+    async function deleteSprint(id) {
+        const sprint = state.sprints.find(s => Number(s.id) === Number(id));
+        if (!sprint || !confirm(`Delete ${sprint.name}? This cannot be undone.`)) return;
+        try {
+            const response = await apiFetch(`${API.sprints}/${encodeURIComponent(id)}`, { method: "DELETE" });
+            if (!response.ok) throw new Error(response.data?.error || "Could not delete sprint.");
+            state.sprints = state.sprints.filter(s => Number(s.id) !== Number(id));
+            cacheState(); renderSprints();
+            showToast("Sprint deleted.", "success");
+        } catch (error) {
+            showToast(error.message || "Unable to delete sprint.", "error");
+        }
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+
+    function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
+    }
+
+    function formatDate(value) {
+        if (!value) return "Unknown date";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        return date.toLocaleDateString();
+    }
+
+    function statusClass(status) {
+        const s = String(status).toLowerCase();
+        if (s === "done" || s === "closed" || s === "resolved" || s === "passed" || s === "active") {
+            return "bg-emerald-950/40 border-emerald-800 text-emerald-300";
+        }
+        if (s === "critical" || s === "failed" || s === "inactive") {
+            return "bg-red-950/40 border-red-800 text-red-300";
+        }
+        if (s === "in progress" || s === "ongoing" || s === "retest" || s === "away") {
+            return "bg-amber-950/40 border-amber-800 text-amber-300";
+        }
+        return "bg-slate-800 border-slate-700 text-slate-300";
+    }
+
+    function severityClass(severity) {
+        const s = String(severity).toLowerCase();
+        if (s === "critical") return "bg-red-950/40 border-red-800 text-red-300";
+        if (s === "high") return "bg-orange-950/40 border-orange-800 text-orange-300";
+        if (s === "medium") return "bg-amber-950/40 border-amber-800 text-amber-300";
+        return "bg-sky-950/40 border-sky-800 text-sky-300";
+    }
+
+    function emptyState(message, icon = "inbox") {
+        return `<div class="bg-card border border-dashed border-slate-800 rounded-xl p-10 text-center"><i data-lucide="${icon}" class="w-7 h-7 mx-auto text-slate-600 mb-3"></i><p class="text-xs text-slate-500">${escapeHtml(message)}</p></div>`;
+    }
+
+    </script>
+</body>
+</html>
