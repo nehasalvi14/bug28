@@ -1,0 +1,499 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@qanexus.com",
+      "password": "admin",
+      "role": "QA Head"
+    },
+    {
+      "id": 2,
+      "username": "nishit",
+      "email": "nishit@qanexus.com",
+      "password": "password123",
+      "role": "QA Head"
+    },
+    {
+      "id": 3,
+      "username": "priya",
+      "email": "priya@qanexus.com",
+      "password": "password123",
+      "role": "QA Tester"
+    },
+    {
+      "id": 4,
+      "username": "aditya",
+      "email": "aditya@qanexus.com",
+      "password": "password123",
+      "role": "Developer"
+    },
+    {
+      "id": 5,
+      "username": "client",
+      "email": "client@qanexus.com",
+      "password": "password123",
+      "role": "Client"
+    },
+    {
+      "id": 6,
+      "username": "Neha",
+      "email": "swamisamarth323@gmail.com",
+      "password": "123456",
+      "role": "QA Tester"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "name": "E-Commerce Platform",
+      "code": "ECOMM",
+      "status": "Ongoing",
+      "progress": 75,
+      "team_details": "Nishit Dubey (QA Head), Aditya Joshi (Developer)",
+      "outcome": "A scalable online shopping cart with seamless payment gateway integration and real-time order tracking."
+    },
+    {
+      "id": 2,
+      "name": "Banking Mobile App",
+      "code": "BANK",
+      "status": "Done",
+      "progress": 100,
+      "team_details": "Priya Nair (QA Tester), Rahul Deshmukh (Developer)",
+      "outcome": "Secure mobile banking portal with biometric authentication and zero high-severity defects."
+    }
+  ],
+  "sprints": [
+    {
+      "id": 3,
+      "sprint_code": "SPR-003",
+      "name": "Sprint 1",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 1 delivery, QA validation, and defect resolution",
+      "start_date": "2026-04-01",
+      "end_date": "2026-04-14",
+      "status": "Completed",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 4,
+      "sprint_code": "SPR-004",
+      "name": "Sprint 2",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 2 delivery, QA validation, and defect resolution",
+      "start_date": "2026-05-15",
+      "end_date": "2026-05-28",
+      "status": "Completed",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Rahul Deshmukh"
+      ]
+    },
+    {
+      "id": 5,
+      "sprint_code": "SPR-005",
+      "name": "Sprint 3",
+      "project": "Banking Mobile App",
+      "goal": "Sprint 3 delivery, QA validation, and defect resolution",
+      "start_date": "2026-05-01",
+      "end_date": "2026-05-14",
+      "status": "Completed",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 6,
+      "sprint_code": "SPR-006",
+      "name": "Sprint 4",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 4 delivery, QA validation, and defect resolution",
+      "start_date": "2026-06-15",
+      "end_date": "2026-06-28",
+      "status": "Completed",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Rahul Deshmukh"
+      ]
+    },
+    {
+      "id": 7,
+      "sprint_code": "SPR-007",
+      "name": "Sprint 5",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 5 delivery, QA validation, and defect resolution",
+      "start_date": "2026-06-01",
+      "end_date": "2026-06-14",
+      "status": "Completed",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 8,
+      "sprint_code": "SPR-008",
+      "name": "Sprint 6",
+      "project": "Banking Mobile App",
+      "goal": "Sprint 6 delivery, QA validation, and defect resolution",
+      "start_date": "2026-07-15",
+      "end_date": "2026-07-28",
+      "status": "Completed",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Rahul Deshmukh"
+      ]
+    },
+    {
+      "id": 9,
+      "sprint_code": "SPR-009",
+      "name": "Sprint 7",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 7 delivery, QA validation, and defect resolution",
+      "start_date": "2026-07-01",
+      "end_date": "2026-07-14",
+      "status": "Completed",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 10,
+      "sprint_code": "SPR-010",
+      "name": "Sprint 8",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 8 delivery, QA validation, and defect resolution",
+      "start_date": "2026-08-15",
+      "end_date": "2026-08-28",
+      "status": "Completed",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Rahul Deshmukh"
+      ]
+    },
+    {
+      "id": 11,
+      "sprint_code": "SPR-011",
+      "name": "Sprint 9",
+      "project": "Banking Mobile App",
+      "goal": "Sprint 9 delivery, QA validation, and defect resolution",
+      "start_date": "2026-08-01",
+      "end_date": "2026-08-14",
+      "status": "Completed",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 12,
+      "sprint_code": "SPR-012",
+      "name": "Sprint 10",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 10 delivery, QA validation, and defect resolution",
+      "start_date": "2026-09-15",
+      "end_date": "2026-09-28",
+      "status": "Completed",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Rahul Deshmukh"
+      ]
+    },
+    {
+      "id": 13,
+      "sprint_code": "SPR-013",
+      "name": "Sprint 11",
+      "project": "E-Commerce Platform",
+      "goal": "Sprint 11 delivery, QA validation, and defect resolution",
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-14",
+      "status": "Active",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 14,
+      "sprint_code": "SPR-014",
+      "name": "Sprint 12",
+      "project": "Banking Mobile App",
+      "goal": "Sprint 12 delivery, QA validation, and defect resolution",
+      "start_date": "2026-10-15",
+      "end_date": "2026-10-28",
+      "status": "On Hold",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Rahul Deshmukh"
+      ]
+    },
+    {
+      "id": 2,
+      "sprint_code": "SPR-002",
+      "name": "Sprint 13",
+      "project": "E-Commerce Platform",
+      "goal": "Cart & Product Improvements",
+      "start_date": "2026-08-18",
+      "end_date": "2026-08-31",
+      "status": "Completed",
+      "sprint_lead": "Priya Nair",
+      "team_members": [
+        "Nishit Dubey",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 1,
+      "sprint_code": "SPR-001",
+      "name": "Sprint 14",
+      "project": "E-Commerce Platform",
+      "goal": "Checkout & Payment Improvements",
+      "start_date": "2026-09-01",
+      "end_date": "2026-09-14",
+      "status": "Planned",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    },
+    {
+      "id": 15,
+      "sprint_code": "SPR-015",
+      "name": "Sprint 15",
+      "project": "Banking Mobile App",
+      "goal": "Sprint 15 delivery, QA validation, and defect resolution",
+      "start_date": "2026-11-01",
+      "end_date": "2026-11-14",
+      "status": "Active",
+      "sprint_lead": "Nishit Dubey",
+      "team_members": [
+        "Priya Nair",
+        "Aditya Joshi"
+      ]
+    }
+  ],
+  "bugs": [
+    {
+      "id": 1,
+      "bug_code": "BUG-1001",
+      "title": "Payment Gateway 504 Timeout Error",
+      "project": "E-Commerce Platform",
+      "sprint": "Sprint 14",
+      "severity": "Critical",
+      "priority": "High",
+      "status": "Open",
+      "description": "Checkout process fails on payment gateway redirection under peak loads.",
+      "steps": "1. Add items to cart\n2. Proceed to checkout\n3. Select Credit Card payment\n4. Click Pay Now",
+      "expected_result": "Payment confirmation page should load within 3 seconds.",
+      "actual_result": "Server responds with 504 Gateway Timeout error screen.",
+      "assigned_tester": "Priya Nair",
+      "assigned_developer": "Aditya Joshi",
+      "comments": [
+        {
+          "author": "Priya Nair",
+          "text": "Issue reproduced during peak-load testing.",
+          "time": "1 hour ago"
+        }
+      ],
+      "audit_history": [
+        {
+          "action": "Bug created",
+          "user": "Priya Nair",
+          "time": "Today"
+        },
+        {
+          "action": "Assigned to Aditya Joshi",
+          "user": "Nishit Dubey",
+          "time": "Today"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "bug_code": "BUG-1002",
+      "title": "Profile Avatar Upload Crop Bug",
+      "project": "E-Commerce Platform",
+      "sprint": "Sprint 14",
+      "severity": "Medium",
+      "priority": "Medium",
+      "status": "In Progress",
+      "description": "User profile avatar gets stretched when uploading non-square PNG images.",
+      "steps": "1. Go to settings\n2. Upload rectangular avatar\n3. Click save",
+      "expected_result": "Image should automatically crop to square aspect ratio.",
+      "actual_result": "Image gets horizontally stretched.",
+      "assigned_tester": "Nishit Dubey",
+      "assigned_developer": "Rahul Deshmukh",
+      "comments": [],
+      "audit_history": [
+        {
+          "action": "Bug created",
+          "user": "Nishit Dubey",
+          "time": "Yesterday"
+        }
+      ]
+    }
+  ],
+  "test_cases": [
+    {
+      "id": 1,
+      "test_code": "TC-1001",
+      "title": "Verify Login with Valid Credentials",
+      "module": "Authentication",
+      "project": "E-Commerce Platform",
+      "sprint": "Sprint 14",
+      "priority": "High",
+      "preconditions": "User account exists in system.",
+      "steps": "1. Open login modal\n2. Enter valid email and password\n3. Click Login",
+      "expected_result": "User should be logged in and redirected to dashboard.",
+      "actual_result": "User successfully logged in with toast notification.",
+      "assigned_tester": "Priya Nair",
+      "test_result": "Passed"
+    },
+    {
+      "id": 2,
+      "test_code": "TC-1002",
+      "title": "Verify Password Reset Token Expiry",
+      "module": "Authentication",
+      "project": "E-Commerce Platform",
+      "sprint": "Sprint 14",
+      "priority": "Medium",
+      "preconditions": "Reset token generated.",
+      "steps": "1. Request password reset\n2. Wait 15 minutes\n3. Click reset link",
+      "expected_result": "Link should display 'Token Expired' message.",
+      "actual_result": "Link allows password update even after expiry.",
+      "assigned_tester": "Nishit Dubey",
+      "test_result": "Failed"
+    }
+  ],
+  "team": [
+    {
+      "id": 1,
+      "name": "Nishit Dubey",
+      "role": "QA Head",
+      "department": "Tech / QA",
+      "status": "Active",
+      "assigned_projects": "E-Commerce Platform",
+      "assigned_tasks": 4
+    },
+    {
+      "id": 2,
+      "name": "Priya Nair",
+      "role": "QA Tester",
+      "department": "Quality Assurance",
+      "status": "Active",
+      "assigned_projects": "E-Commerce Platform, Banking Mobile App",
+      "assigned_tasks": 6
+    },
+    {
+      "id": 3,
+      "name": "Aditya Joshi",
+      "role": "Developer",
+      "department": "Backend Engineering",
+      "status": "Away",
+      "assigned_projects": "E-Commerce Platform",
+      "assigned_tasks": 3
+    },
+    {
+      "id": 4,
+      "name": "Amitabh Banerjee",
+      "role": "Client",
+      "department": "Product Management",
+      "status": "Active",
+      "assigned_projects": "Banking Mobile App",
+      "assigned_tasks": 0
+    }
+  ],
+  "reports": [
+    {
+      "id": 1,
+      "title": "Sprint 14 Defect Audit",
+      "project": "E-Commerce Platform",
+      "generated_by": "Nishit Dubey",
+      "date": "2026-09-28",
+      "summary": "Audited 12 defects logged during payment integration phase. Critical bugs isolated."
+    }
+  ],
+  "activity_logs": [
+    {
+      "id": 9,
+      "user": "Neha",
+      "action": "updated Sprint 14",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:08:29"
+    },
+    {
+      "id": 8,
+      "user": "Neha",
+      "action": "updated Sprint 12",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:08:21"
+    },
+    {
+      "id": 7,
+      "user": "Neha",
+      "action": "updated Sprint 11",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:08:16"
+    },
+    {
+      "id": 6,
+      "user": "Neha",
+      "action": "updated Sprint 14",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:05:30"
+    },
+    {
+      "id": 5,
+      "user": "Neha",
+      "action": "logged into QA Core Nexus",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:05:17"
+    },
+    {
+      "id": 4,
+      "user": "Neha",
+      "action": "logged into QA Core Nexus",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:04:38"
+    },
+    {
+      "id": 3,
+      "user": "Neha",
+      "action": "created a new QA Tester account",
+      "timestamp": "Just now",
+      "created_at": "2026-10-09 16:04:33"
+    },
+    {
+      "id": 1,
+      "user": "Nishit Dubey",
+      "action": "assigned BUG-1001 to Aditya Joshi",
+      "timestamp": "2 minutes ago",
+      "created_at": "2026-10-09 16:04:07"
+    },
+    {
+      "id": 2,
+      "user": "Priya Nair",
+      "action": "created Sprint 14",
+      "timestamp": "1 hour ago",
+      "created_at": "2026-10-09 16:04:07"
+    }
+  ]
+}
